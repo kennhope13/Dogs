@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const Token = require("../models/Token");
 const Dog = require("../models/Dogs");
 const jwt = require("jsonwebtoken");
+const DogsCart = require("../models/DogsCart");
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 
@@ -215,6 +216,67 @@ module.exports = function (app, objJson, isEmailValid) {
             .catch((err) => {
                 res.json({ result: 0, message: "CHỈNH SỬA THẤT BẠI.", err: err });
             })
+    })
+    app.post("/dogs-cart",(req, res)=>{
+        const name = req.body.name;
+        const price = req.body.price;
+        const imageUrl = req.body.imageUrl;
+        const newDogCart = new DogsCart({
+            name: name,
+            price: price,
+            imageUrl: imageUrl,
+            registerDate:Date.now()
+        })
+        newDogCart.save()
+        .then((data) => {
+            res.json({ result: 1, message: "Lưu thành công.", data: data });
+        }).catch((err) => {
+            res.json({ result: 0, message: "Lưu thất bại.", err: err });
+        })
+        //DogsCart.findOne()
+        // .then((dog)=>{
+        //     jwt.sign({
+        //         data: dog,
+        //     }, objJson.secretKey, { expiresIn: 60 * 60 }, function (errT, token) {
+        //         //console.log(data);
+        //         if (errT) {
+        //             res.json({ result: 0, message: "Tạo Token không thành công." });
+        //         } else {
+        //             const newToken = new DogsCart({
+                        
+        //                 tokenDog: token,
+        //                 resgisterDate: Date.now()
+        //             })
+        //             //res.cookie('TOKEN', token, { secure: false });
+        //             newToken.save()
+        //                 .then((data) => {
+        //                     res.json({ result: 1, message: "Tạo token thành công", data: data });
+        //                     console.log("token: ", data.tokenDog);
+        //                 })
+        //                 .catch((err) => {
+        //                     res.json({ result: 0, message: "Lưu Token thất bại", err: err });
+        //                 })
+        //         }
+        //     });
+             //res.json({dog});
+             //console.log(dog);
+        //})
+    })
+    app.get("/cart/:id",(req,res)=>{
+        User.findById(req.params.id,req.body)
+        .then((data) => {
+            DogsCart.find()
+            .then((data)=>{
+                res.json({ result: 1, message: "Tìm thấy", data: data });
+            })
+            .catch((err) => {
+                res.json({ result: 0, message: "CHỈNH SỬA THẤT BẠI.", err: err });
+            })
+            //res.json({  message: "Tìm thấy id", data: data });
+        })
+        .catch((err) => {
+            res.json({ result: 0, message: "Không tìm thấy id", err: err });
+        })
     })
 
     //admin
