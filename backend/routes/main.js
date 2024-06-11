@@ -101,7 +101,7 @@ module.exports = function (app, objJson, isEmailValid) {
                                             res.cookie('TOKEN', token, { secure: false });
                                             newToken.save()
                                                 .then((data) => {
-                                                    res.json({ result: 1, message: "Đăng nhập thành công", data: data });
+                                                    res.json({ result: 1, message: "Đăng nhập thành công", data: data, newToken: newToken });
                                                     console.log("token: ", data.Token);
                                                 })
                                                 .catch((err) => {
@@ -173,7 +173,7 @@ module.exports = function (app, objJson, isEmailValid) {
                 breed: breed,
                 decription: decription,
                 price: price,
-                imageUrl:img,
+                imageUrl: img,
                 registerDate: Date()
             })
             newDog.save().then((data) => {
@@ -217,22 +217,43 @@ module.exports = function (app, objJson, isEmailValid) {
                 res.json({ result: 0, message: "CHỈNH SỬA THẤT BẠI.", err: err });
             })
     })
-    app.post("/dogs-cart",(req, res)=>{
-        const name = req.body.name;
-        const price = req.body.price;
-        const imageUrl = req.body.imageUrl;
-        const newDogCart = new DogsCart({
-            name: name,
-            price: price,
-            imageUrl: imageUrl,
-            registerDate:Date.now()
-        })
-        newDogCart.save()
-        .then((data) => {
-            res.json({ result: 1, message: "Lưu thành công.", data: data });
-        }).catch((err) => {
-            res.json({ result: 0, message: "Lưu thất bại.", err: err });
-        })
+    app.post("/dogs-cart", async (req, res) => {
+        // const name = req.body.name;
+        // const price = req.body.price;
+        // const imageUrl = req.body.imageUrl;
+        // const userId = req.cookies.USERID;
+
+        console.log("kkk", req.body);
+        const DogCart = await DogsCart.findOne({ userId: req.body.userId });
+        //console.log("aa", DogCart.dogItems);
+        if (DogCart) {
+            const data = {
+                $push: {
+                    dogItems: req.body.dog_items
+                }
+            }
+            DogsCart.findOneAndUpdate({ userId: DogCart.userId }, data)
+                .then((data) => {
+                    res.json({ result: 1, message: "Lưu thành công tip.", data: data });
+                }).catch((err) => {
+                    res.json({ result: 0, message: "Lưu thất bại.", err: err });
+                })
+        } else {
+            const newDogCart = new DogsCart({
+                dogItems: req.body.dog_items,
+                userId: req.body.userId,
+                registerDate: Date.now()
+            })
+
+
+            newDogCart.save()
+                .then((data) => {
+                    res.json({ result: 1, message: "Lưu thành công.", data: data });
+                }).catch((err) => {
+                    res.json({ result: 0, message: "Lưu thất bại.", err: err });
+                })
+        }
+
         //DogsCart.findOne()
         // .then((dog)=>{
         //     jwt.sign({
@@ -243,7 +264,7 @@ module.exports = function (app, objJson, isEmailValid) {
         //             res.json({ result: 0, message: "Tạo Token không thành công." });
         //         } else {
         //             const newToken = new DogsCart({
-                        
+
         //                 tokenDog: token,
         //                 resgisterDate: Date.now()
         //             })
@@ -258,11 +279,11 @@ module.exports = function (app, objJson, isEmailValid) {
         //                 })
         //         }
         //     });
-             //res.json({dog});
-             //console.log(dog);
+        //res.json({dog});
+        //console.log(dog);
         //})
     })
-    app.get("/cart/:id",(req,res)=>{
+    app.get("/cart", (req, res) => {
         // User.findOne(req.params.email,req.body)
         // .then((data) => {
         //     // DogsCart.find()
@@ -279,44 +300,44 @@ module.exports = function (app, objJson, isEmailValid) {
         // })
         const token = req.cookies.TOKEN;
         //console.log("token: ",token);
-        if(!token){
-            res.json({result:0,message:"không có token"})
-        }else{
-            Token.findOne({Token:token})
-        .then((t)=>{
-            if(t==null){
-                res.json({ result: 0, message: "Token hết hạn" });
-            }
-            else{
-                jwt.verify(token, objJson.secretKey, function(err, decoded) {
-                    if(err){
-                        res.json({result:0, message:"giải mã không thành công",err:err});
-                    }else{
-                        const iduser=req.params.id;
-                        const id = decoded.data._id
-                        console.log(decoded.data._id);
-                        console.log(id);
-                        User.findById({id:iduser}).then((data)=>{
-                            DogsCart.find()
-                            .then((data)=>{
-                                res.json({result:1,message:"tìm thấy dog.",data:data})
-                                console.log(data);
-                            })
-                            .catch((err)=>{
-                                res.json({result:0,message:"không tìm thấy dogs"})
-                            })
-                        })
-                        .catch((err)=>({result:0,message:"không tìm thấy id",err:err}));
-                        //res.json({result:1,message:"giả mã thành công.",data:decoded});
+        if (!token) {
+            res.json({ result: 0, message: "không có token" })
+        } else {
+            Token.findOne({ Token: token })
+                .then((t) => {
+                    if (t == null) {
+                        res.json({ result: 0, message: "Token hết hạn" });
                     }
-                  });
-            }       
-            })
-        .catch((err)=>{
-            res.json({ result: 0, message: "Token hết hạn" })
-        })
+                    else {
+                        jwt.verify(token, objJson.secretKey, function (err, decoded) {
+                            if (err) {
+                                res.json({ result: 0, message: "giải mã không thành công", err: err });
+                            } else {
+                                const iduser = req.params.id;
+                                const id = decoded.data._id
+                                console.log(decoded.data._id);
+                                console.log(id);
+                                User.find({ id: iduser })
+                                    .then(() => {
+                                        DogsCart.find()
+                                            .then((data) => {
+                                                res.json({ result: 1, message: "tìm thấy dog.", data: data })
+                                                //console.log(data);
+                                            })
+                                            .catch((err) => {
+                                                res.json({ result: 0, message: "không tìm thấy dogs" })
+                                            })
+                                    })
+                                    .catch((err) => ({ result: 0, message: "không tìm thấy id", err: err }));
+                            }
+                        });
+                    }
+                })
+                .catch((err) => {
+                    res.json({ result: 0, message: "Token hết hạn" })
+                })
         }
-        
+
     })
 
     //admin
@@ -397,8 +418,8 @@ module.exports = function (app, objJson, isEmailValid) {
         fileFilter: function (req, file, cb) {
             console.log(file);
             if (file.mimetype == "image/bmp" || file.mimetype == "image/png"
-            || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg"
-            || file.mimetype == "image/git") {
+                || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg"
+                || file.mimetype == "image/git") {
                 cb(null, true)
             } else {
                 return cb(new Error('Only image are allowed!'))
