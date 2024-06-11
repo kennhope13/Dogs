@@ -263,20 +263,60 @@ module.exports = function (app, objJson, isEmailValid) {
         //})
     })
     app.get("/cart/:id",(req,res)=>{
-        User.findById(req.params.id,req.body)
-        .then((data) => {
-            DogsCart.find()
-            .then((data)=>{
-                res.json({ result: 1, message: "Tìm thấy", data: data });
+        // User.findOne(req.params.email,req.body)
+        // .then((data) => {
+        //     // DogsCart.find()
+        //     // .then((data)=>{
+        //     //     res.json({ result: 1, message: "Tìm thấy", data: data });
+        //     // })
+        //     // .catch((err) => {
+        //     //     res.json({ result: 0, message: "CHỈNH SỬA THẤT BẠI.", err: err });
+        //     // })
+        //     res.json({  message: "Tìm thấy email", data: data });
+        // })
+        // .catch((err) => {
+        //     res.json({ result: 0, message: "Không tìm thấy id", err: err });
+        // })
+        const token = req.cookies.TOKEN;
+        //console.log("token: ",token);
+        if(!token){
+            res.json({result:0,message:"không có token"})
+        }else{
+            Token.findOne({Token:token})
+        .then((t)=>{
+            if(t==null){
+                res.json({ result: 0, message: "Token hết hạn" });
+            }
+            else{
+                jwt.verify(token, objJson.secretKey, function(err, decoded) {
+                    if(err){
+                        res.json({result:0, message:"giải mã không thành công",err:err});
+                    }else{
+                        const iduser=req.params.id;
+                        const id = decoded.data._id
+                        console.log(decoded.data._id);
+                        console.log(id);
+                        User.findById({id:iduser}).then((data)=>{
+                            DogsCart.find()
+                            .then((data)=>{
+                                res.json({result:1,message:"tìm thấy dog.",data:data})
+                                console.log(data);
+                            })
+                            .catch((err)=>{
+                                res.json({result:0,message:"không tìm thấy dogs"})
+                            })
+                        })
+                        .catch((err)=>({result:0,message:"không tìm thấy id",err:err}));
+                        //res.json({result:1,message:"giả mã thành công.",data:decoded});
+                    }
+                  });
+            }       
             })
-            .catch((err) => {
-                res.json({ result: 0, message: "CHỈNH SỬA THẤT BẠI.", err: err });
-            })
-            //res.json({  message: "Tìm thấy id", data: data });
+        .catch((err)=>{
+            res.json({ result: 0, message: "Token hết hạn" })
         })
-        .catch((err) => {
-            res.json({ result: 0, message: "Không tìm thấy id", err: err });
-        })
+        }
+        
     })
 
     //admin
