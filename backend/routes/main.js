@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const DogsCart = require("../models/DogsCart");
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
+require("../public/lib.js");
 
 module.exports = function (app, objJson, isEmailValid) {
     app.use(cookieParser());
@@ -13,8 +14,8 @@ module.exports = function (app, objJson, isEmailValid) {
         origin: 'http://localhost:3000', // Thay đổi bằng domain của bạn nếu cần thiết
         credentials: true // Cho phép gửi cookie qua CORS
     }));
-    app.get("/", (req, res) => {
-        res.send("hello world");
+    app.get('/', function (req, res) {
+        res.send("WELCOM TO DOGSAIGON")
     })
 
     //User
@@ -75,6 +76,7 @@ module.exports = function (app, objJson, isEmailValid) {
     app.post("/login", (req, res) => {
         const email = req.body.Email;
         const password = req.body.Password;
+
         if (!email || !password) {
             res.json({ result: 0, message: "Chưa nhập tài khoản hoặc mật khẩu." });
         } else {
@@ -85,6 +87,7 @@ module.exports = function (app, objJson, isEmailValid) {
                             if (err) {
                                 res.json({ result: 0, message: "Giải mã không thành công", err: err });
                             } else {
+
                                 if (result === true) {
                                     jwt.sign({
                                         data: user
@@ -96,14 +99,12 @@ module.exports = function (app, objJson, isEmailValid) {
                                                 Email: email,
                                                 Token: token,
                                                 Status: true,
+                                                UserID: user._id,
                                                 resgisterDate: Date.now()
                                             })
-                                            res.cookie('TOKEN', token, { secure: false });
-                                           // res.cookie('USERID', _id, { secure: false });
                                             newToken.save()
                                                 .then((data) => {
                                                     res.json({ result: 1, message: "Đăng nhập thành công", data: data, newToken: newToken });
-                                                    console.log("token: ", data.Token);
                                                 })
                                                 .catch((err) => {
                                                     res.json({ result: 0, message: "Lưu Token thất bại", err: err });
@@ -219,15 +220,9 @@ module.exports = function (app, objJson, isEmailValid) {
             })
     })
     app.post("/dogs-cart", async (req, res) => {
-        // const name = req.body.name;
-        // const price = req.body.price;
-        // const imageUrl = req.body.imageUrl;
-        // const userId = req.cookies.USERID;
-
         if (!req.body.userId) {
             res.json({ result: 0, message: "không có ID" });
         } else {
-            console.log("kkk", req.body.userId);
             const DogCart = await DogsCart.findOne({ userId: req.body.userId });
             //console.log("aa", DogCart.dogItems);
             if (DogCart) {
@@ -258,118 +253,16 @@ module.exports = function (app, objJson, isEmailValid) {
                     })
             }
         }
-
-        //DogsCart.findOne()
-        // .then((dog)=>{
-        //     jwt.sign({
-        //         data: dog,
-        //     }, objJson.secretKey, { expiresIn: 60 * 60 }, function (errT, token) {
-        //         //console.log(data);
-        //         if (errT) {
-        //             res.json({ result: 0, message: "Tạo Token không thành công." });
-        //         } else {
-        //             const newToken = new DogsCart({
-
-        //                 tokenDog: token,
-        //                 resgisterDate: Date.now()
-        //             })
-        //             //res.cookie('TOKEN', token, { secure: false });
-        //             newToken.save()
-        //                 .then((data) => {
-        //                     res.json({ result: 1, message: "Tạo token thành công", data: data });
-        //                     console.log("token: ", data.tokenDog);
-        //                 })
-        //                 .catch((err) => {
-        //                     res.json({ result: 0, message: "Lưu Token thất bại", err: err });
-        //                 })
-        //         }
-        //     });
-        //res.json({dog});
-        //console.log(dog);
-        //})
     })
     app.get("/cart", async (req, res) => {
-        const userID = req.cookies.USERID;
-        //const userID =  req.cookie('USERID', userId, { secure: false });
-        console.log(userID);
-        //res.json({data:req.body})
-        await  DogsCart.findOne({ userId: req.cookies.USERID })
+        await DogsCart.findOne({ userId: req.cookies.USERID })
             .then((data) => {
                 res.json({ result: 1, message: "tìm thấy chó", data: data });
-                console.log(data);
+                //console.log(data);
             })
             .catch((err) => {
                 res.json({ result: 0, message: "không tìm thấy chó", err: err });
             })
-
-
-        // if (!idClient) {
-        //     res.json({ result: 0, message: "Không có ID " });
-        // } else {
-
-        //     DogsCart.find({userId:userID})
-        //     .then((data)=>{
-        //         res.json({ result: 1, messgage: "Tìm thấy chó", data:data});
-        //         console.log(data);
-        //     })
-        //     .catch((err)=>{
-        //         res.json({ result: 0, messgage: "Không tìm thấy chó", err:err});
-        //     })
-
-        //  }
-        // User.findOne(req.params.email,req.body)
-        // .then((data) => {
-        //     // DogsCart.find()
-        //     // .then((data)=>{
-        //     //     res.json({ result: 1, message: "Tìm thấy", data: data });
-        //     // })
-        //     // .catch((err) => {
-        //     //     res.json({ result: 0, message: "CHỈNH SỬA THẤT BẠI.", err: err });
-        //     // })
-        //     res.json({  message: "Tìm thấy email", data: data });
-        // })
-        // .catch((err) => {
-        //     res.json({ result: 0, message: "Không tìm thấy id", err: err });
-        // })
-        //const token = req.cookies.TOKEN;
-        //console.log("token: ",token);
-        //if (!token) {
-        //     res.json({ result: 0, message: "không có token" })
-        // } else {
-        //     Token.findOne({ Token: token })
-        //         .then((t) => {
-        //             if (t == null) {
-        //                 res.json({ result: 0, message: "Token hết hạn" });
-        //             }
-        //             else {
-        //                 jwt.verify(token, objJson.secretKey, function (err, decoded) {
-        //                     if (err) {
-        //                         res.json({ result: 0, message: "giải mã không thành công", err: err });
-        //                     } else {
-        //                         const iduser = req.params.id;
-        //                         const id = decoded.data._id
-        //                         console.log(decoded.data._id);
-        //                         console.log(id);
-        //                         User.find({ id: iduser })
-        //                             .then(() => {
-        //                                 DogsCart.find()
-        //                                     .then((data) => {
-        //                                         res.json({ result: 1, message: "tìm thấy dog.", data: data })
-        //                                         //console.log(data);
-        //                                     })
-        //                                     .catch((err) => {
-        //                                         res.json({ result: 0, message: "không tìm thấy dogs" })
-        //                                     })
-        //                             })
-        //                             .catch((err) => ({ result: 0, message: "không tìm thấy id", err: err }));
-        //                     }
-        //                 });
-        //             }
-        //         })
-        //         .catch((err) => {
-        //             res.json({ result: 0, message: "Token hết hạn" })
-        //         })
-        // }
 
     })
 
