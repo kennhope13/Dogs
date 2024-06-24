@@ -124,6 +124,16 @@ module.exports = function (app, objJson, isEmailValid) {
                 })
         }
     })
+    app.get("/logout", (req, res) => {
+        const token = req.cookies.TOKEN;
+        if (!token) {
+            res.json({ result: 0, message: "không có token." });
+        } else {
+            Token.findOneAndDelete({ Token: token })
+                .then((data) => { res.json({ result: 1, messgage: "Đăng xuất thành công", data: data }) })
+                .catch((err) => { res.json({ result: 0, messgage: "Đăng xuất thất bại", err: err }) })
+        }
+    })
     app.post("/listuser", (req, res) => {
         User.find().then((data) => {
             res.json({ result: 1, massage: "Tìm thấy User.", userData: data });
@@ -303,7 +313,7 @@ module.exports = function (app, objJson, isEmailValid) {
         //  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
         const token = req.cookies.TOKEN;
         if (!token) return res.status(401).send({ message: 'Không tìm thấy token' });
-        console.log("token", token);
+        //console.log("token", token);
         jwt.verify(token, objJson.secretKey, (err, user) => {
             if (err) {
                 return res.status(403).send({ message: 'Token không hợp lệ' });
@@ -314,7 +324,7 @@ module.exports = function (app, objJson, isEmailValid) {
                 } else {
                     req.user.isAdmin = false;
                 }
-                console.log("ussertype", req.user.data.Usertype);
+                //console.log("ussertype", req.user.data.Usertype);
                 next();
 
             }
