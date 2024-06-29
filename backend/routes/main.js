@@ -15,7 +15,18 @@ module.exports = function (app, objJson, isEmailValid) {
         credentials: true // Cho phép gửi cookie qua CORS
     }));
     app.get('/', function (req, res) {
-        res.send("WELCOM TO DOGSAIGON")
+        const token = req.cookies.TOKEN;
+        if(!token){
+            res.json({result:0,message:"Không có token"});
+        }else{
+            jwt.verify(token, objJson.secretKey, (err, user) => {
+                if (err) {
+                    res.json({result:0, message:"xác minh không thành công",err});
+                } else {
+                    res.json({result:1,message:"xác minh thành công",data:user});
+                }
+            });
+        }
     })
 
     //User
@@ -324,7 +335,8 @@ module.exports = function (app, objJson, isEmailValid) {
                 } else {
                     req.user.isAdmin = false;
                 }
-                //console.log("ussertype", req.user.data.Usertype);
+                
+                //console.log("ussertype", req.user.data);
                 next();
 
             }
