@@ -16,14 +16,14 @@ module.exports = function (app, objJson, isEmailValid) {
     }));
     app.get('/', function (req, res) {
         const token = req.cookies.TOKEN;
-        if(!token){
-            res.json({result:0,message:"Không có token"});
-        }else{
+        if (!token) {
+            res.json({ result: 0, message: "Không có token" });
+        } else {
             jwt.verify(token, objJson.secretKey, (err, user) => {
                 if (err) {
-                    res.json({result:0, message:"xác minh không thành công",err});
+                    res.json({ result: 0, message: "xác minh không thành công", err });
                 } else {
-                    res.json({result:1,message:"xác minh thành công",data:user});
+                    res.json({ result: 1, message: "xác minh thành công", data: user });
                 }
             });
         }
@@ -39,24 +39,24 @@ module.exports = function (app, objJson, isEmailValid) {
         const usertype = req.body.Usertype;
         console.log("email::", email);
         if (!email || !password) {
-            res.json({ result: 0, message: "chưa điền tài khoản hoặc mật khẩu." });
+            res.json({ result: 0, message: "Chưa điền tài khoản hoặc mật khẩu." });
         } else {
             //kiểm tra mật khẩu lớn hơn 6 kí tự và kiểm tra email hợp lệ
             if (!isEmailValid(email)) {
-                res.json({ result: 0, message: "email không hợp lệ." });
+                res.json({ result: 0, message: "Email không hợp lệ." });
             } else if (password.length < objJson.validateFormat.minPasswordLength) {
-                res.json({ result: 0, message: "mật khẩu phải lớn hơn 6 kí tự." });
+                res.json({ result: 0, message: "Mật khẩu phải lớn hơn 6 kí tự." });
             } else {
                 //kiểm tra người dùng có bị trùng.
                 User.findOne({ Email: email }).then((data) => {
                     if (data != null) {
-                        res.json({ result: 0, message: "tài khoản đã tồn tại." });
+                        res.json({ result: 0, message: "Tài khoản đã tồn tại." });
                     } else {
                         //mã hóa password
                         bcrypt.genSalt(10, function (err, salt) {
                             bcrypt.hash(password, salt, function (err, hash) {
                                 if (err) {
-                                    res.json({ result: 0, message: "mã hóa thất bại." });
+                                    res.json({ result: 0, message: "Mã hóa thất bại." });
                                 } else {
                                     const newUser = new User({
                                         Email: email,
@@ -68,10 +68,10 @@ module.exports = function (app, objJson, isEmailValid) {
                                     })
                                     newUser.save()
                                         .then((data) => {
-                                            res.json({ result: 1, message: "đăng ký thành công.", data: data })
+                                            res.json({ result: 1, message: "Đăng ký thành công.", data: data })
                                         })
                                         .catch((err) => {
-                                            res.json({ result: 0, message: "đăng ký thất bại..", err: err });
+                                            res.json({ result: 0, message: "Đăng ký thất bại..", err: err });
                                         })
                                 }
                             });
@@ -79,7 +79,7 @@ module.exports = function (app, objJson, isEmailValid) {
                     }
                 })
                     .catch((err) => {
-                        res.json({ result: 0, message: "tìm thất bại", err: err });
+                        res.json({ result: 0, message: "Tìm thất bại", err: err });
                     })
             }
         }
@@ -138,7 +138,7 @@ module.exports = function (app, objJson, isEmailValid) {
     app.get("/logout", (req, res) => {
         const token = req.cookies.TOKEN;
         if (!token) {
-            res.json({ result: 0, message: "không có token." });
+            res.json({ result: 0, message: "Không có token." });
         } else {
             Token.findOneAndDelete({ Token: token })
                 .then((data) => { res.json({ result: 1, messgage: "Đăng xuất thành công", data: data }) })
@@ -286,6 +286,15 @@ module.exports = function (app, objJson, isEmailValid) {
             })
 
     })
+    app.get("/checkout", (req, res) => {
+        DogsCart.findOneAndDelete({ userId: req.cookies.USERID})
+            .then((data) => {
+                res.json({ result: 1, message: "xóa thành công" ,data:data})
+            })
+            .catch((err) => {
+                res.json({ result: 0, message: "xóa không thành công", err: err });
+            })
+    })
 
     //admin
     function checkAdmin(req, res, next) {
@@ -335,7 +344,7 @@ module.exports = function (app, objJson, isEmailValid) {
                 } else {
                     req.user.isAdmin = false;
                 }
-                
+
                 //console.log("ussertype", req.user.data);
                 next();
 
