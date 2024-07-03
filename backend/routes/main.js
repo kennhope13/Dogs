@@ -4,6 +4,7 @@ const Token = require("../models/Token");
 const Dog = require("../models/Dogs");
 const jwt = require("jsonwebtoken");
 const DogsCart = require("../models/DogsCart");
+const DetailCart = require("../models/DetailCart");
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 require("../public/lib.js");
@@ -287,13 +288,59 @@ module.exports = function (app, objJson, isEmailValid) {
 
     })
     app.get("/checkout", (req, res) => {
-        DogsCart.findOneAndDelete({ userId: req.cookies.USERID})
+        DogsCart.findOneAndDelete({ userId: req.cookies.USERID })
             .then((data) => {
-                res.json({ result: 1, message: "xóa thành công" ,data:data})
+                res.json({ result: 1, message: "xóa thành công", data: data })
             })
             .catch((err) => {
                 res.json({ result: 0, message: "xóa không thành công", err: err });
             })
+    })
+    app.post("/detail", (req, res) => {
+        const userID = req.cookies.USERID;
+        if (!userID) {
+            res.json({ result: 0, message: "Không có ID User" });
+        } else {
+            User.findOne({ _id: userID })
+                .then((dataUser) => {
+                    if (!req.body.dog_items || !req.body.Address || !req.body.TotalPrice) {
+                        res.json({ result: 0, message: "Không có dữ liệu." });
+                    } else {
+                        const newDetailCart = new DetailCart({
+                            Name: dataUser.Name,
+                            dogItems: req.body.dog_items,
+                            Address: req.body.Address,
+                            TotalPrice: req.body.TotalPrice,
+                            RegisterDate: Date.now()
+                        })
+                        newDetailCart.save()
+                            .then((data) => {
+                                res.json({ result: 1, message: "Lưu thành công.", data: data })
+                            })
+                            .catch((err) => {
+                                res.json({ result: 0, message: "Lưu không thành công.", err: err });
+                            })
+                    }
+                })
+                .catch((err) => {
+                    res.json({ result: 0, message: "Không tìm thấy user", err: err });
+                })
+        }
+    })
+    app.post("/order", (req, res) => {
+        const userID = req.cookies.USERID;
+        if (!userID) {
+            res.json({ result: 0, message: "Không có ID" });
+        } else {
+            DetailCart.findOne()
+                .then((data) => {
+                    res.json({ result: 1, message: "Tìm thành công", data: data });
+                })
+                .catch((err)=>{
+                    res.json({result:0, message:"Tìm không thành công.", err:err});
+                })
+            
+        }
     })
 
     //admin
