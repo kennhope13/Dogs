@@ -5,6 +5,7 @@ const DetailCartSchema = new Schema({
     dogItems:Array,
     Address:String,
     TotalPrice:Number,
+    userId: String,
     RegisterDate:Date
 })
 module.exports = model("detailcarts",DetailCartSchema);

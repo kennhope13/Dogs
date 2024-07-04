@@ -311,6 +311,7 @@ module.exports = function (app, objJson, isEmailValid) {
                             dogItems: req.body.dog_items,
                             Address: req.body.Address,
                             TotalPrice: req.body.TotalPrice,
+                            userId:req.body.userId,
                             RegisterDate: Date.now()
                         })
                         newDetailCart.save()
@@ -332,7 +333,7 @@ module.exports = function (app, objJson, isEmailValid) {
         if (!userID) {
             res.json({ result: 0, message: "Không có ID" });
         } else {
-            DetailCart.findOne()
+            DetailCart.findOne({userId:userID})
                 .then((data) => {
                     res.json({ result: 1, message: "Tìm thành công", data: data });
                 })
