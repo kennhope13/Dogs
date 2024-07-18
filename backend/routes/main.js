@@ -4,7 +4,7 @@ const Token = require("../models/Token");
 const Dog = require("../models/Dogs");
 const jwt = require("jsonwebtoken");
 const DogsCart = require("../models/DogsCart");
-const DetailCart = require("../models/DetailCart");
+const DetailCart1 = require("../models/DetailCart1")
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 require("../public/lib.js");
@@ -253,6 +253,7 @@ module.exports = function (app, objJson, isEmailValid) {
                         dogItems: req.body.dog_items
                     }
                 }
+                //console.log(DogCart.userId);
                 DogsCart.findOneAndUpdate({ userId: DogCart.userId }, data)
                     .then((data) => {
                         res.json({ result: 1, message: "Lưu thành công tip.", data: data });
@@ -296,22 +297,37 @@ module.exports = function (app, objJson, isEmailValid) {
                 res.json({ result: 0, message: "xóa không thành công", err: err });
             })
     })
-    app.post("/detail", (req, res) => {
+    app.post("/detail", async (req, res) => {
         const userID = req.cookies.USERID;
         if (!userID) {
             res.json({ result: 0, message: "Không có ID User" });
         } else {
-            User.findOne({ _id: userID })
-                .then((dataUser) => {
-                    if (!req.body.dog_items || !req.body.Address || !req.body.TotalPrice) {
-                        res.json({ result: 0, message: "Không có dữ liệu." });
-                    } else {
-                        const newDetailCart = new DetailCart({
-                            Name: dataUser.Name,
+            const DetailCart11 = await DetailCart1.findOne({ userId: req.body.userId })
+            if (DetailCart11) {
+                const data = {
+                    $push: {
+                        DetailCart: req.body.DetailCart1
+                    }
+                }
+                DetailCart1.findOneAndUpdate({ userId: userID }, data)
+                    .then((data) => {
+                        res.json({ reuslt: 1, message: "Thêm đơn hàng thành công.", data: data });
+
+                    })
+                    .catch((err) => {
+                        res.json({ result: 0, message: "Thêm đơn hàng không thành công.", err: err });
+
+                    })
+            } else {
+                User.findOne({ _id: userID })
+                    .then((data) => {
+                        const newDetailCart = new DetailCart1({
+                            Name: data.Name,
                             dogItems: req.body.dog_items,
+                            DetailCart: req.body.DetailCart1,
                             Address: req.body.Address,
                             TotalPrice: req.body.TotalPrice,
-                            userId:req.body.userId,
+                            userId: req.body.userId,
                             RegisterDate: Date.now()
                         })
                         newDetailCart.save()
@@ -321,11 +337,11 @@ module.exports = function (app, objJson, isEmailValid) {
                             .catch((err) => {
                                 res.json({ result: 0, message: "Lưu không thành công.", err: err });
                             })
-                    }
-                })
-                .catch((err) => {
-                    res.json({ result: 0, message: "Không tìm thấy user", err: err });
-                })
+                    })
+                    .catch((err) => {
+                        res.json({ result: 0, message: "Không tìm thấy user", err: err });
+                    })
+            }
         }
     })
     app.post("/order", (req, res) => {
@@ -333,17 +349,25 @@ module.exports = function (app, objJson, isEmailValid) {
         if (!userID) {
             res.json({ result: 0, message: "Không có ID" });
         } else {
-            DetailCart.findOne({userId:userID})
+            DetailCart1.findOne({ userId: userID })
                 .then((data) => {
                     res.json({ result: 1, message: "Tìm thành công", data: data });
                 })
-                .catch((err)=>{
-                    res.json({result:0, message:"Tìm không thành công.", err:err});
+                .catch((err) => {
+                    res.json({ result: 0, message: "Tìm không thành công.", err: err });
                 })
-            
+
         }
     })
-
+    app.post("/search", (req, res) => {
+        Dog.find({ name: req.body.name })
+            .then((data) => {
+                res.json({ result: 1, message: "tìm thành công.", data: data })
+            })
+            .catch((err) => {
+                res.json({ result: 0, message: "tìm không thành công.", err, err })
+            })
+    })
     //admin
     function checkAdmin(req, res, next) {
         if (!req.body.Token) {
@@ -401,11 +425,11 @@ module.exports = function (app, objJson, isEmailValid) {
     };
     app.get("/checkadmin", authenticateToken, (req, res) => {
         const isAdmin = req.user.isAdmin;
+        console.log("is adminn", isAdmin);
         if (isAdmin) {
-            res.json({ result: 1, isAdmin });
-        } else {
-            res.json({ result: 0 });
+            return res.json({ result: 1, isAdmin });
         }
+        return res.json({ result: 0 });
     });
 
     //upload file multer
